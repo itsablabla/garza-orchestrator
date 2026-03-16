@@ -412,26 +412,30 @@ async function handleTool(name, args) {
   }
 }
 
-// --- MCP Server setup ---
+// --- MCP Server factory (create fresh per request for stateless HTTP) ---
 
-const server = new Server(
-  { name: "garza-agent-control", version: "1.0.0" },
-  { capabilities: { tools: {} } }
-);
+function createMcpServer() {
+  const server = new Server(
+    { name: "garza-agent-control", version: "1.0.0" },
+    { capabilities: { tools: {} } }
+  );
 
-server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
 
-server.setRequestHandler(CallToolRequestSchema, async (req) => {
-  const { name, arguments: args } = req.params;
-  try {
-    return await handleTool(name, args || {});
-  } catch (err) {
-    return {
-      content: [{ type: "text", text: `Error: ${err.message}` }],
-      isError: true,
-    };
-  }
-});
+  server.setRequestHandler(CallToolRequestSchema, async (req) => {
+    const { name, arguments: args } = req.params;
+    try {
+      return await handleTool(name, args || {});
+    } catch (err) {
+      return {
+        content: [{ type: "text", text: `Error: ${err.message}` }],
+        isError: true,
+      };
+    }
+  });
+
+  return server;
+}
 
 // --- HTTP server (for Railway deployment) ---
 
@@ -458,7 +462,7 @@ const httpServer = http.createServer(async (req, res) => {
     return;
   }
 
-  // MCP endpoint
+  // MCP endpoint — create a fresh Server instance per request (stateless StreamableHTTP)
   if (req.url === "/mcp" || req.url?.startsWith("/mcp")) {
     // Auth check
     const authHeader = req.headers["authorization"] || req.headers["x-auth-token"] || "";
@@ -469,13 +473,17 @@ const httpServer = http.createServer(async (req, res) => {
       return;
     }
 
+    const server = createMcpServer();
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
     });
     
-    res.on("close", () => transport.close());
-    await transport.handleRequest(req, res);
     await server.connect(transport);
+    res.on("close", () => {
+      transport.close();
+      server.close();
+    });
+    await transport.handleRequest(req, res);
     return;
   }
 
