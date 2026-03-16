@@ -32,7 +32,7 @@ const AGENT_BASE_URL = "https://app.base44.com/api/agents";
 // --- Base44 entity helpers ---
 
 async function base44Fetch(path, method = "GET", body = null) {
-  const url = `https://api.base44.com/api/apps/${BASE44_APP_ID}${path}`;
+  const url = `https://app.base44.com/api/apps/${BASE44_APP_ID}${path}`;
   const headers = {
     "Content-Type": "application/json",
     "api-key": BASE44_API_KEY,
