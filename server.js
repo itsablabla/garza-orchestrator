@@ -21,7 +21,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import http from "http";
 
-const BASE44_APP_ID = process.env.BASE44_APP_ID || "69b612998f4243854e120a07";
+const BASE44_APP_ID = process.env.BASE44_APP_ID || "69b71b9327da8af106df2620";
 const BASE44_API_KEY = process.env.BASE44_API_KEY || "022fc4c1910f4162bfe315271e5a7692";
 const BASE44_SERVICE_TOKEN = process.env.BASE44_SERVICE_TOKEN || "";
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
